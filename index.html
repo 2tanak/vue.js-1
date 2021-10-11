@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Vue JS</title>
+	<link rel="icon" type="image/png" href="/icon.png" />
+  </head>
+  <body>
+    <div id="app">
+      <component-first></component-first>
+      <component-two></component-two>
+      <componet-three></componet-three>
+    </div>
+
+    <script src="js/vue.js"></script>
+    <script>
+      var eventEmitter = new Vue;
+	  // ------------------------------------КОМПОНЕНТ -1---------------------------------
+
+      var component= {
+      //props:['bankaМ85'],
+        data: function(){
+          return {
+            //параметры банки:
+      	  //name - название банки,
+      	  //ob-объем банки,
+      	  //varenie_name -название варенья,
+            //varenie_massa- масса варенья в граммах
+      	  //z- занятость банки в процентах будет заполнено в компоненте-2
+      	  //varenie_name- название варенья будет заполнено в компоненте-2
+      	  //varenie_massa- всего варенья в граммах заполнено в компоненте-2
+      	  //пустые параметры заполняются в компоненте 2
+      	  banka:[{name:'М85',ob:0,z:0,varenie_name:'null'},{name:'М90',ob:200,z:0,varenie_name:'null'},{name:'М70',ob:300,z:0,varenie_name:'null'}],
+      	  bankaМ85:0,
+      	  bankaМ70:0,
+      	  bankaМ90:0
+          }
+        },
+         methods: {
+
+      	},
+
+         mounted: function() {
+			 var param2='';
+             eventEmitter.$emit('component2Call',this.banka,param2)
+            //вызываем передачу параметров в компонент 2
+
+          },
+         computed: {
+            computedResultInput1: function() {
+      		  //cлежение за изменением инпута-1 с банкой М85
+      		  this.banka[0].ob=this.bankaМ85;
+      		  param2 = this.banka[0].name;
+      		   eventEmitter.$emit('component2Call',this.banka,param2)
+      	      return this.bankaМ85;
+
+            },
+      	    computedResultInput2: function() {
+      			//cлежение за изменением инпута-2 с банкой М90
+      		  this.banka[1].ob=this.bankaМ90;
+      		  param2 = this.banka[1].name;
+      		   //alert(this.banka[1].z);
+      		  eventEmitter.$emit('component2Call',this.banka,param2)
+      	      return this.bankaМ90;
+
+            },
+      	    computedResultInput3: function(val) {
+      			//cлежение за изменением инпута-3 с банкой М70
+      		  this.banka[2].ob=this.bankaМ70;
+      		  param2 = this.banka[2].name;
+      		   //alert(this.banka[1].z);
+      		  eventEmitter.$emit('component2Call',this.banka,param2)
+      	      return this.bankaМ70;
+
+            }
+      	  },
+
+
+
+
+      template: `<div> <h2>Введите значение объема</h2><div style="margin-bottom:10px;"><input type="text"  v-model="bankaМ85">
+      объем банки М85 = {{computedResultInput1}}</div>
+
+      	<div style="margin-bottom:10px;"><input type="text" v-model="bankaМ90">
+      	объем банки М90 = {{computedResultInput2}}
+          </div>
+
+      	<div style="margin-bottom:10px;"><input type="text" v-model="bankaМ70">
+      	объем банки М70 = {{computedResultInput3}}
+          </div>
+      	</div>
+      	`
+
+      }
+// ------------------------------------КОМПОНЕНТ -2---------------------------------
+      var component2 = {
+
+        data: function(){
+          return {
+           //параметры варенья:
+      	 //name - название варенья
+      	 //size - масса варенья в граммах
+      	  varenie:[{name:'klubnichnoe','size':1000},{name:'vishnevoe',size:100},{name:'abrikosovoe',size:150}],
+      	  banka:[],//сюда поместим принятый масив банку из первого компонента
+      	  nameBanka:''
+          }
+
+        },
+         methods: {
+      	  
+          pp: function() {
+      			//функция для начальной загрузки, выбираем банки для варенья
+
+      		var banka= this.banka;
+      		var varenie= this.varenie;
+
+              varenie.forEach(function(item, i) {//цикл по вареньям
+      		var idx = banka.findIndex(c => c.varenie_name === 'null')//ищем элемент где есть пустая банка
+      		if(idx >= 0){
+      		  banka[idx].varenie_massa = item.size;//помещаем в масив банка сведения о количестве варенья
+      		  banka[idx].varenie_name = item.name;//заняли банку для этого варенья
+      		}
+      	});
+      	        //отправка масива для вывода в третьем компоненте
+              	eventEmitter.$emit('component3',this.banka)
+
+            },
+
+
+      	},
+      	 mounted: function() {
+      		this.pp();//функция для начальной загрузки
+          },
+      	 created() {
+      	//принимаем переданную банку от первого компонента
+            eventEmitter.$on('component2Call', (param,param2) => {
+            if(param2 !=''){
+      	      this.nameBanka = param2;//чтобы знать в какой банке сделать перерасщет
+		      this.banka =[];
+		    }
+      	 this.banka = param;//объем банки изменен, благодоря обновившемуся масиву, вызываем метод watch
+       })
+        },
+        watch:{
+      	  banka:function(val){
+      		//перерасщет
+			if(this.nameBanka !=''){//выполняем это если пришли параметры из инпутов
+			   //ищем элемент где изменился объем в банке
+      		   var idx = this.banka.findIndex(c => c.name === this.nameBanka);
+      		   var varenie_idx = this.varenie.findIndex(c => c.name === this.banka[idx].varenie_name)
+			   //ищем банку где изменился объем
+			   var p= (this.varenie[varenie_idx].size/this.banka[idx].ob) * 100;//находим процент от объема банки
+			   if(p > 100){//если варенья больше чем емкость банки
+                   this.banka[idx].z = 100; //занято 100% или вся банка
+      		     }else{
+      		       this.banka[idx].z = p;//занят процент от банки
+      		    }
+      		   //отправка масива для вывода в третьем компоненте
+      		   eventEmitter.$emit('component3',this.banka)
+             }
+           },
+		 
+        },
+		template: `<div> </div>`
+
+      }
+// ------------------------------------КОМПОНЕНТ -3---------------------------------
+
+      var component3 = {
+         data: function(){
+          return {
+            banka:[],//сюда поместим принятый результат от второго компонента
+      	 perevod:{klubnichnoe:'Клубничное',vishnevoe:'Вишневое',abrikosovoe:'Абрикосовое'}
+
+          }
+
+        },
+
+          created() {
+      	//приняли переданный результат от второго компонента и готовим к выводу
+          eventEmitter.$on('component3', (param) => {
+      		this.banka=[];
+
+      	//console.log(param[1].varenie_massa)
+      	 var banka = this.banka;
+      	 param.forEach(function(value,index){
+
+
+      	   var gramm = (value.ob/100) * value.z;//сколько грамм варенья в банке
+      	   value.g = Math.round(gramm);
+      	   banka.push(value);
+      	});
+
+
+
+
+          })
+        },
+       template: `
+         <ul>
+           <li style ="border:1px solid red;margin-bottom:20px; list-style-type: none;padding:10px " v-for="(val, key) in banka" :value="key">
+      	   <ul><li style="padding:3px"><b>Название банки</b> {{val.name}}</li>
+      	    <li style="padding:3px"><b>Объем в банке</b>  {{val.ob}} грамм</li>
+      		<li v-if="val.ob" style="padding:3px"><b>Заполненость банки</b>  {{Math.round(val.z)}} %</li>
+      	   <li style="padding:3px"><b>Название варенья</b>  {{perevod[val.varenie_name]}}</li>
+      	   <li style="padding:3px"><b>Всего сваренно </b>  {{val.varenie_massa}} грамм</li>
+      	     <li style="padding:3px"><b>грамм варенья в банке</b>  {{val.g}} грамм</li>
+      	   </ul>
+
+      	</li>
+
+          </ul>
+
+        `
+
+      }
+
+ new Vue({
+       el: '#app',
+        components: {
+        componentFirst:component,
+      	componentTwo:component2,
+      	componetThree:component3
+      }
+    })
+    </script>
+  </body>
+</html>
